@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Follow Back Checker</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&family=Noto+Sans+Malayalam:wght@400;600;700&family=Noto+Sans+Tamil:wght@400;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap');
+
+  :root,
+  body[data-theme="dark"]{
+    --bg: #10151c;
+    --bg-glow-1: rgba(79,209,174,0.10);
+    --bg-glow-2: rgba(122,162,232,0.08);
+    --panel: #182028;
+    --panel-2: #1e2830;
+    --line: #2a3540;
+    --text: #e7edf2;
+    --muted: #8b9aa8;
+    --accent: #4fd1ae;
+    --accent-ink: #0b1712;
+    --mutual: #4fd1ae;
+    --owe: #f2946b;
+    --fan: #7aa2e8;
+  }
+
+  body[data-theme="blue"]{
+    --bg: #0a121f;
+    --bg-glow-1: rgba(77,163,255,0.12);
+    --bg-glow-2: rgba(122,162,232,0.10);
+    --panel: #101c2e;
+    --panel-2: #142338;
+    --line: #223349;
+    --text: #e7edf5;
+    --muted: #869ab3;
+    --accent: #4da3ff;
+    --accent-ink: #06121f;
+    --mutual: #4da3ff;
+    --owe: #f2946b;
+    --fan: #8bd3ff;
+  }
+
+  body[data-theme="green"]{
+    --bg: #0b1510;
+    --bg-glow-1: rgba(74,222,128,0.12);
+    --bg-glow-2: rgba(134,206,150,0.08);
+    --panel: #101d15;
+    --panel-2: #14251a;
+    --line: #223a2b;
+    --text: #e6f2ea;
+    --muted: #8aab97;
+    --accent: #4ade80;
+    --accent-ink: #06170d;
+    --mutual: #4ade80;
+    --owe: #f2b06b;
+    --fan: #7ad0a8;
+  }
+
+  *{ box-sizing:border-box; }
+
+  body{
+    margin:0;
+    background:
+      radial-gradient(circle at 15% -10%, var(--bg-glow-1), transparent 45%),
+      radial-gradient(circle at 90% 10%, var(--bg-glow-2), transparent 40%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter', 'Noto Sans Devanagari', 'Noto Sans Tamil', 'Noto Sans Malayalam', sans-serif;
+    min-height:100vh;
+    padding:28px 18px 60px;
+    transition:background-color .25s ease;
+  }
+
+  .wrap{ max-width:920px; margin:0 auto; }
+
+  .controls{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:14px; flex-wrap:wrap; margin-bottom:26px;
+  }
+
+  .theme-pills{
+    display:inline-flex; gap:6px; background:var(--panel);
+    border:1px solid var(--line); border-radius:999px; padding:4px;
+  }
+  .theme-pill{
+    display:inline-flex; align-items:center; gap:7px;
+    border:none; background:transparent; color:var(--muted);
+    font-family:'Manrope', sans-serif; font-weight:700; font-size:12.5px;
+    padding:8px 13px; border-radius:999px; cursor:pointer;
+    transition:background-color .15s ease, color .15s ease;
+  }
+  .theme-pill .dot{
+    width:9px; height:9px; border-radius:50%; flex-shrink:0;
+  }
+  .theme-pill[data-theme-btn="dark"] .dot{ background:#4fd1ae; }
+  .theme-pill[data-theme-btn="blue"] .dot{ background:#4da3ff; }
+  .theme-pill[data-theme-btn="green"] .dot{ background:#4ade80; }
+  .theme-pill.active{ background:var(--panel-2); color:var(--text); }
+
+  .lang-select{
+    background:var(--panel); border:1px solid var(--line); color:var(--text);
+    font-family:'Manrope', sans-serif; font-weight:700; font-size:12.5px;
+    padding:9px 14px; border-radius:999px; cursor:pointer;
+  }
+
+  header{ margin-bottom:32px; }
+
+  .mark{
+    display:inline-flex; align-items:center; gap:9px;
+    font-family:'Manrope', sans-serif; font-weight:800; font-size:15px;
+    color:var(--muted); letter-spacing:0.02em; margin-bottom:14px;
+  }
+  .mark svg{ width:18px; height:18px; color:var(--accent); }
+
+  h1{
+    font-family:'Manrope', sans-serif;
+    font-weight:800;
+    font-size:clamp(26px,4.5vw,38px);
+    line-height:1.2;
+    margin:0 0 10px;
+    max-width:20ch;
+  }
+  header p{
+    color:var(--muted); font-size:15.5px; line-height:1.65; max-width:60ch; margin:0;
+  }
+
+  .grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:18px;
+  }
+  @media (max-width:680px){ .grid{ grid-template-columns:1fr; } }
+
+  .field{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:18px 18px 16px;
+  }
+  .field label.field-label{
+    display:block; font-family:'Manrope', sans-serif; font-weight:700;
+    font-size:14.5px; margin-bottom:4px;
+  }
+  .field .hint{ color:var(--muted); font-size:12.5px; margin-bottom:10px; }
+
+  .rows{
+    display:flex; flex-direction:column; gap:8px; margin-bottom:10px;
+    max-height:320px; overflow-y:auto; padding-right:2px;
+  }
+  .person-row{
+    display:flex; align-items:center; gap:9px;
+    background:var(--bg); border:1px solid var(--line); border-radius:9px;
+    padding:7px 8px;
+  }
+  .avatar-upload{
+    position:relative; width:34px; height:34px; border-radius:50%;
+    flex-shrink:0; cursor:pointer; overflow:hidden;
+    border:1px solid var(--line); background:var(--panel-2);
+  }
+  .avatar-upload img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .avatar-upload input[type="file"]{ display:none; }
+  .avatar-upload::after{
+    content:''; position:absolute; inset:0; border-radius:50%;
+    border:1.5px solid var(--accent); opacity:0; transition:opacity .15s ease;
+  }
+  .avatar-upload:hover::after{ opacity:1; }
+  .name-input{
+    flex:1; min-width:0; background:transparent; border:none; color:var(--text);
+    font-family:'Inter', sans-serif; font-size:13.5px; padding:6px 2px;
+  }
+  .name-input:focus{ outline:none; }
+  .row-remove{
+    flex-shrink:0; width:24px; height:24px; border-radius:50%; border:none;
+    background:var(--panel-2); color:var(--muted); cursor:pointer;
+    font-size:15px; line-height:1; display:flex; align-items:center; justify-content:center;
+  }
+  .row-remove:hover{ color:var(--owe); }
+
+  .field-controls{
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:4px;
+  }
+  .mini-btn{
+    display:inline-flex; align-items:center; gap:6px;
+    background:var(--panel-2); border:1px solid var(--line); color:var(--text);
+    font-family:'Inter', sans-serif; font-weight:500; font-size:12.5px;
+    padding:7px 12px; border-radius:8px; cursor:pointer;
+    transition:border-color .15s ease;
+  }
+  .mini-btn:hover{ border-color:var(--accent); }
+  .mini-btn svg{ width:13px; height:13px; flex-shrink:0; }
+  .mini-btn input[type="file"]{ display:none; }
+
+  .paste-box{
+    display:none; margin-top:10px;
+  }
+  .paste-box.open{ display:block; }
+  .paste-box textarea{
+    width:100%; min-height:90px; resize:vertical;
+    background:var(--bg); border:1px solid var(--line); border-radius:9px;
+    color:var(--text); font-family:'Inter', sans-serif; font-size:13px;
+    padding:10px; line-height:1.6;
+  }
+  .paste-box .paste-actions{ display:flex; gap:8px; margin-top:7px; }
+  .paste-actions button{
+    font-family:'Manrope', sans-serif; font-weight:700; font-size:12.5px;
+    border-radius:8px; padding:7px 14px; cursor:pointer; border:1px solid var(--line);
+  }
+  .paste-actions .confirm{ background:var(--accent); color:var(--accent-ink); border:none; }
+  .paste-actions .cancel{ background:transparent; color:var(--muted); }
+
+  .count{ margin-top:8px; font-size:12.5px; color:var(--muted); }
+  .count b{ color:var(--text); }
+
+  .ocr-status{ font-size:12.5px; color:var(--muted); width:100%; margin-top:2px; }
+  .ocr-status.working{ color:var(--fan); }
+  .ocr-status.done{ color:var(--mutual); }
+
+  .run{
+    display:flex; justify-content:center; margin:22px 0 8px;
+  }
+  button.go{
+    background:var(--accent); color:var(--accent-ink); border:none;
+    font-family:'Manrope', sans-serif; font-weight:800; font-size:15px;
+    padding:13px 30px; border-radius:999px; cursor:pointer;
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  button.go:hover{ transform:translateY(-1px); box-shadow:0 8px 20px var(--bg-glow-1); }
+  button.go:active{ transform:translateY(0); }
+
+  .results{ margin-top:30px; }
+  .results.hidden{ display:none; }
+
+  .summary{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:22px;
+  }
+  @media (max-width:680px){ .summary{ grid-template-columns:1fr; } }
+  .stat{
+    border-radius:14px; padding:16px 18px; border:1px solid var(--line);
+  }
+  .stat .n{ font-family:'Manrope', sans-serif; font-weight:800; font-size:30px; line-height:1; }
+  .stat .l{ font-size:13px; color:var(--muted); margin-top:6px; }
+  .stat.mutual{ background:color-mix(in srgb, var(--mutual) 10%, transparent); border-color:color-mix(in srgb, var(--mutual) 40%, transparent); }
+  .stat.mutual .n{ color:var(--mutual); }
+  .stat.owe{ background:color-mix(in srgb, var(--owe) 10%, transparent); border-color:color-mix(in srgb, var(--owe) 40%, transparent); }
+  .stat.owe .n{ color:var(--owe); }
+  .stat.fan{ background:color-mix(in srgb, var(--fan) 10%, transparent); border-color:color-mix(in srgb, var(--fan) 40%, transparent); }
+  .stat.fan .n{ color:var(--fan); }
+
+  .group{
+    background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    margin-bottom:14px; overflow:hidden;
+  }
+  .group summary{
+    list-style:none; cursor:pointer; padding:15px 18px;
+    display:flex; align-items:center; justify-content:space-between;
+    font-family:'Manrope', sans-serif; font-weight:700; font-size:15px;
+    gap:10px;
+  }
+  .group summary::-webkit-details-marker{ display:none; }
+  .group summary .tag{ font-size:12.5px; color:var(--muted); font-weight:500; white-space:nowrap; }
+  .group summary .arrow{ font-size:20px; color:var(--muted); font-weight:400; }
+  .group[open] summary .arrow{ transform:rotate(180deg); display:inline-block; }
+  .names{
+    padding:2px 18px 16px; display:flex; flex-wrap:wrap; gap:8px;
+  }
+  .chip{
+    display:inline-flex; align-items:center; gap:7px;
+    background:var(--panel-2); border:1px solid var(--line); border-radius:20px;
+    padding:5px 12px 5px 5px; font-size:13.5px;
+  }
+  .chip img, .chip .chip-fallback{
+    width:22px; height:22px; border-radius:50%; object-fit:cover; flex-shrink:0;
+    display:block; background:var(--bg); border:1px solid var(--line);
+  }
+  .chip .chip-fallback{ display:flex; align-items:center; justify-content:center; color:var(--muted); }
+  .chip .chip-fallback svg{ width:12px; height:12px; }
+  .empty{ color:var(--muted); font-size:13.5px; padding:2px 18px 16px; }
+
+  .note{
+    margin-top:26px; padding:14px 16px; border:1px dashed var(--line);
+    border-radius:12px; color:var(--muted); font-size:12.5px; line-height:1.65;
+  }
+</style>
+</head>
+<body data-theme="dark">
+<div class="wrap">
+
+  <div class="controls">
+    <div class="theme-pills" role="group" aria-label="Theme">
+      <button class="theme-pill active" data-theme-btn="dark"><span class="dot"></span>Dark</button>
+      <button class="theme-pill" data-theme-btn="blue"><span class="dot"></span>Blue</button>
+      <button class="theme-pill" data-theme-btn="green"><span class="dot"></span>Green</button>
+    </div>
+    <select class="lang-select" id="langSelect" aria-label="Language">
+      <option value="en">English</option>
+      <option value="ml_latin">Manglish</option>
+      <option value="hi">हिन्दी</option>
+      <option value="ta">தமிழ்</option>
+      <option value="ml">മലയാളം</option>
+    </select>
+  </div>
+
+  <header>
+    <div class="mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c0-3 2.5-5.2 5.5-5.2s5.5 2.2 5.5 5.2"/><path d="M17 4.5c1.8.4 3 2 3 3.9 0 1.4-.7 2.6-1.8 3.3"/><path d="M15.5 14c2.5.3 4.5 2.3 4.5 5"/></svg>
+      Follow Back Checker
+    </div>
+    <h1 data-i18n="heading"></h1>
+    <p data-i18n="subtitle"></p>
+  </header>
+
+  <div class="grid">
+    <div class="field">
+      <label class="field-label" for="followersRows" data-i18n="followersLabel"></label>
+      <div class="hint" data-i18n="followersHint"></div>
+      <div class="rows" id="followersRows"></div>
+      <div class="field-controls">
+        <button class="mini-btn" type="button" data-add-person="followers">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-7 8-7s8 3 8 7"/><path d="M19 8h4M21 6v4"/></svg>
+          <span data-i18n="addPersonBtn"></span>
+        </button>
+        <label class="mini-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10.5" r="1.5"/><path d="M21 15l-5-5-4.5 4.5L9 12l-6 6"/></svg>
+          <span data-i18n="uploadBtn"></span>
+          <input type="file" id="followersPhoto" accept="image/*" multiple>
+        </label>
+        <button class="mini-btn" type="button" data-toggle-paste="followers">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="M9 9h6M9 13h6M9 17h3"/></svg>
+          <span data-i18n="pasteListBtn"></span>
+        </button>
+      </div>
+      <div class="ocr-status" id="followersStatus"></div>
+      <div class="paste-box" id="followersPasteBox">
+        <textarea id="followersPasteArea" placeholder="anu_k
+rahul.dev
+meera_travels"></textarea>
+        <div class="paste-actions">
+          <button class="confirm" type="button" data-paste-confirm="followers" data-i18n="pasteConfirmBtn"></button>
+          <button class="cancel" type="button" data-paste-cancel="followers" data-i18n="pasteCancelBtn"></button>
+        </div>
+      </div>
+      <div class="count"><span data-i18n="totalLabel"></span> <b id="fCount">0</b></div>
+    </div>
+    <div class="field">
+      <label class="field-label" for="followingRows" data-i18n="followingLabel"></label>
+      <div class="hint" data-i18n="followingHint"></div>
+      <div class="rows" id="followingRows"></div>
+      <div class="field-controls">
+        <button class="mini-btn" type="button" data-add-person="following">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-7 8-7s8 3 8 7"/><path d="M19 8h4M21 6v4"/></svg>
+          <span data-i18n="addPersonBtn"></span>
+        </button>
+        <label class="mini-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10.5" r="1.5"/><path d="M21 15l-5-5-4.5 4.5L9 12l-6 6"/></svg>
+          <span data-i18n="uploadBtn"></span>
+          <input type="file" id="followingPhoto" accept="image/*" multiple>
+        </label>
+        <button class="mini-btn" type="button" data-toggle-paste="following">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="M9 9h6M9 13h6M9 17h3"/></svg>
+          <span data-i18n="pasteListBtn"></span>
+        </button>
+      </div>
+      <div class="ocr-status" id="followingStatus"></div>
+      <div class="paste-box" id="followingPasteBox">
+        <textarea id="followingPasteArea" placeholder="anu_k
+karthik.official
+meera_travels"></textarea>
+        <div class="paste-actions">
+          <button class="confirm" type="button" data-paste-confirm="following" data-i18n="pasteConfirmBtn"></button>
+          <button class="cancel" type="button" data-paste-cancel="following" data-i18n="pasteCancelBtn"></button>
+        </div>
+      </div>
+      <div class="count"><span data-i18n="totalLabel"></span> <b id="gCount">0</b></div>
+    </div>
+  </div>
+
+  <div class="run">
+    <button class="go" id="runBtn" data-i18n="checkBtn"></button>
+  </div>
+
+  <div class="results hidden" id="results">
+    <div class="summary">
+      <div class="stat mutual">
+        <div class="n" id="statMutual">0</div>
+        <div class="l" data-i18n="statMutualLabel"></div>
+      </div>
+      <div class="stat owe">
+        <div class="n" id="statOwe">0</div>
+        <div class="l" data-i18n="statOweLabel"></div>
+      </div>
+      <div class="stat fan">
+        <div class="n" id="statFan">0</div>
+        <div class="l" data-i18n="statFanLabel"></div>
+      </div>
+    </div>
+
+    <details class="group" open>
+      <summary><span data-i18n="groupOweTitle"></span><span class="tag" id="oweTag"></span><span class="arrow">⌄</span></summary>
+      <div class="names" id="oweList"></div>
+    </details>
+
+    <details class="group">
+      <summary><span data-i18n="groupFanTitle"></span><span class="tag" id="fanTag"></span><span class="arrow">⌄</span></summary>
+      <div class="names" id="fanList"></div>
+    </details>
+
+    <details class="group">
+      <summary><span data-i18n="groupMutualTitle"></span><span class="tag" id="mutualTag"></span><span class="arrow">⌄</span></summary>
+      <div class="names" id="mutualList"></div>
+    </details>
+
+    <div class="note" data-i18n="noteText"></div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
+<script>
+  // ---------- Translations ----------
+  const I18N = {
+    en: {
+      heading: "See who follows you back, and who you don't",
+      subtitle: "Type your Followers and Following lists below, or upload a screenshot and we'll pull out the usernames automatically. Nothing is saved to any server — everything happens right here in your browser.",
+      followersLabel: "People who follow you (Followers)",
+      followersHint: "Paste your followers list here",
+      followingLabel: "People you follow (Following)",
+      followingHint: "Paste your following list here",
+      uploadBtn: "Add photo",
+      addPersonBtn: "Add person",
+      pasteListBtn: "Paste list",
+      pasteConfirmBtn: "Add",
+      pasteCancelBtn: "Cancel",
+      namePlaceholder: "username",
+      totalLabel: "Total:",
+      checkBtn: "Check",
+      statMutualLabel: "Mutual — you both follow each other",
+      statOweLabel: "You follow them, they haven't followed back",
+      statFanLabel: "They follow you, you haven't followed back",
+      groupOweTitle: "People who haven't followed back",
+      groupFanTitle: "People you still need to follow back",
+      groupMutualTitle: "Mutual followers",
+      emptyText: "No one here.",
+      noteText: "Names aren't case-sensitive — \"Anu_K\" and \"anu_k\" count as the same. Duplicates are removed automatically. Usernames pulled from a photo may have small mistakes (OCR isn't 100% accurate) — give the text box a quick look before checking.",
+      ocrStatusReading: (i,n) => `Reading photo ${i}/${n}...`,
+      ocrStatusDone: (n) => `Found ${n} username${n===1?'':'s'} — review below if something looks off.`,
+      ocrStatusNone: "Couldn't find anything clearly, try typing manually.",
+      peopleTag: (n) => `${n} ${n===1?'person':'people'}`
+    },
+    ml_latin: {
+      heading: "Ningale follow cheyyunnavarum, ningal follow cheyyaathavarum onnu check cheyyam",
+      subtitle: "Followers list um Following list um thaazhe type cheyyam, allenkil screenshot upload cheyyam — usernames automatic ayi extract cheythu tharum. Onnum server-il save aavilla, ellam ee page-il thanne process cheyyunnu.",
+      followersLabel: "Ningale follow cheyyunnavar (Followers)",
+      followersHint: "Ninte followers list ivide paste cheyyu",
+      followingLabel: "Ningal follow cheyyunnavar (Following)",
+      followingHint: "Ningal follow cheyyunna list ivide paste cheyyu",
+      uploadBtn: "Photo add cheyyu",
+      addPersonBtn: "Aal add cheyyu",
+      pasteListBtn: "List paste cheyyu",
+      pasteConfirmBtn: "Add cheyyu",
+      pasteCancelBtn: "Cancel",
+      namePlaceholder: "username",
+      totalLabel: "Total:",
+      checkBtn: "Check cheyyu",
+      statMutualLabel: "Mutual — irupperum follow cheyyunnu",
+      statOweLabel: "Ningal follow cheyyunnu, avar follow back cheythittilla",
+      statFanLabel: "Avar ningale follow cheyyunnu, ningal back cheythittilla",
+      groupOweTitle: "Follow back cheyyatha aalkkar",
+      groupFanTitle: "Ningal follow back cheyyan baakkiyavar",
+      groupMutualTitle: "Mutual followers",
+      emptyText: "Aarum ivide illa.",
+      noteText: "Names case-sensitive alla — \"Anu_K\" um \"anu_k\" um onnu ayittanu count cheyyunnath. Duplicate entries automatic ayi ozhivakkum. Photo-il ninnu extract cheytha usernames-il chila thettukal varam (OCR 100% accurate alla) — check cheyyunnathinu munpu textbox-il oral nokku.",
+      ocrStatusReading: (i,n) => `Photo ${i}/${n} vaayikkunnu...`,
+      ocrStatusDone: (n) => `${n} username kitti — kuzhappamundenkil edit cheyyam.`,
+      ocrStatusNone: "Onnum vyaktamayi kittiyilla, manual-ayi type cheyyu.",
+      peopleTag: (n) => `${n} aalkkar`
+    },
+    hi: {
+      heading: "देखें कौन आपको फॉलो-बैक करता है, और कौन नहीं",
+      subtitle: "नीचे अपनी Followers और Following लिस्ट टाइप करें, या स्क्रीनशॉट अपलोड करें — यूज़रनेम अपने आप निकल जाएंगे। कुछ भी सर्वर पर सेव नहीं होता, सब कुछ यहीं ब्राउज़र में होता है।",
+      followersLabel: "जो आपको फॉलो करते हैं (Followers)",
+      followersHint: "अपनी followers लिस्ट यहाँ पेस्ट करें",
+      followingLabel: "जिन्हें आप फॉलो करते हैं (Following)",
+      followingHint: "अपनी following लिस्ट यहाँ पेस्ट करें",
+      uploadBtn: "फोटो जोड़ें",
+      addPersonBtn: "व्यक्ति जोड़ें",
+      pasteListBtn: "लिस्ट पेस्ट करें",
+      pasteConfirmBtn: "जोड़ें",
+      pasteCancelBtn: "रद्द करें",
+      namePlaceholder: "यूज़रनेम",
+      totalLabel: "कुल:",
+      checkBtn: "जाँचें",
+      statMutualLabel: "Mutual — दोनों एक-दूसरे को फॉलो करते हैं",
+      statOweLabel: "आप उन्हें फॉलो करते हैं, उन्होंने फॉलो-बैक नहीं किया",
+      statFanLabel: "वे आपको फॉलो करते हैं, आपने फॉलो-बैक नहीं किया",
+      groupOweTitle: "जिन्होंने फॉलो-बैक नहीं किया",
+      groupFanTitle: "जिन्हें आपको अभी फॉलो-बैक करना है",
+      groupMutualTitle: "Mutual followers",
+      emptyText: "यहाँ कोई नहीं है।",
+      noteText: "नाम case-sensitive नहीं हैं — \"Anu_K\" और \"anu_k\" एक ही माने जाएंगे। डुप्लिकेट अपने आप हट जाते हैं। फोटो से निकाले गए यूज़रनेम में थोड़ी गलतियाँ हो सकती हैं (OCR 100% सटीक नहीं है) — जाँचने से पहले टेक्स्ट बॉक्स एक बार देख लें।",
+      ocrStatusReading: (i,n) => `फोटो ${i}/${n} पढ़ी जा रही है...`,
+      ocrStatusDone: (n) => `${n} यूज़रनेम मिले — कुछ गलत लगे तो जाँच लें।`,
+      ocrStatusNone: "साफ़ तौर पर कुछ नहीं मिला, मैन्युअल टाइप करें।",
+      peopleTag: (n) => `${n} लोग`
+    },
+    ta: {
+      heading: "உங்களை யார் திரும்ப பின்தொடர்கிறார்கள், யார் இல்லை என்று பாருங்கள்",
+      subtitle: "கீழே உங்கள் Followers மற்றும் Following பட்டியலை தட்டச்சு செய்யுங்கள், அல்லது ஸ்கிரீன்ஷாட் பதிவேற்றுங்கள் — பயனர்பெயர்கள் தானாகவே எடுக்கப்படும். எதுவும் சர்வரில் சேமிக்கப்படாது, எல்லாம் இந்த பக்கத்திலேயே நடக்கும்.",
+      followersLabel: "உங்களை பின்தொடர்பவர்கள் (Followers)",
+      followersHint: "உங்கள் followers பட்டியலை இங்கே பேஸ்ட் செய்யவும்",
+      followingLabel: "நீங்கள் பின்தொடர்பவர்கள் (Following)",
+      followingHint: "நீங்கள் பின்தொடரும் பட்டியலை இங்கே பேஸ்ட் செய்யவும்",
+      uploadBtn: "புகைப்படம் சேர்",
+      addPersonBtn: "நபரைச் சேர்",
+      pasteListBtn: "பட்டியல் பேஸ்ட் செய்",
+      pasteConfirmBtn: "சேர்",
+      pasteCancelBtn: "ரத்து செய்",
+      namePlaceholder: "பயனர்பெயர்",
+      totalLabel: "மொத்தம்:",
+      checkBtn: "சரிபார்",
+      statMutualLabel: "Mutual — இருவரும் ஒருவரையொருவர் பின்தொடர்கிறார்கள்",
+      statOweLabel: "நீங்கள் அவர்களை பின்தொடர்கிறீர்கள், அவர்கள் திரும்ப பின்தொடரவில்லை",
+      statFanLabel: "அவர்கள் உங்களை பின்தொடர்கிறார்கள், நீங்கள் திரும்ப பின்தொடரவில்லை",
+      groupOweTitle: "திரும்ப பின்தொடராதவர்கள்",
+      groupFanTitle: "நீங்கள் இன்னும் திரும்ப பின்தொடர வேண்டியவர்கள்",
+      groupMutualTitle: "Mutual followers",
+      emptyText: "இங்கே யாரும் இல்லை.",
+      noteText: "பெயர்கள் case-sensitive அல்ல — \"Anu_K\" மற்றும் \"anu_k\" ஒன்றாகவே கணக்கிடப்படும். நகல்கள் தானாக நீக்கப்படும். புகைப்படத்திலிருந்து எடுக்கப்பட்ட பயனர்பெயர்களில் சில பிழைகள் இருக்கலாம் (OCR 100% துல்லியமானது அல்ல) — சரிபார்ப்பதற்கு முன் டெக்ஸ்ட் பாக்ஸை ஒருமுறை பாருங்கள்.",
+      ocrStatusReading: (i,n) => `புகைப்படம் ${i}/${n} படிக்கப்படுகிறது...`,
+      ocrStatusDone: (n) => `${n} பயனர்பெயர்கள் கிடைத்தன — ஏதேனும் தவறாக இருந்தால் சரிபார்க்கவும்.`,
+      ocrStatusNone: "தெளிவாக எதுவும் கிடைக்கவில்லை, கைமுறையாக தட்டச்சு செய்யவும்.",
+      peopleTag: (n) => `${n} பேர்`
+    },
+    ml: {
+      heading: "നിങ്ങളെ ആരൊക്കെ തിരിച്ച് ഫോളോ ചെയ്യുന്നു, ആരൊക്കെ ചെയ്യുന്നില്ല എന്ന് നോക്കാം",
+      subtitle: "താഴെ നിങ്ങളുടെ Followers, Following ലിസ്റ്റുകൾ ടൈപ്പ് ചെയ്യുക, അല്ലെങ്കിൽ സ്ക്രീൻഷോട്ട് അപ്‌ലോഡ് ചെയ്യുക — യൂസർനെയിമുകൾ സ്വയമേവ കണ്ടെത്തും. ഒന്നും സെർവറിൽ സേവ് ചെയ്യില്ല, എല്ലാം ഇവിടെ ബ്രൗസറിൽ തന്നെ നടക്കും.",
+      followersLabel: "നിങ്ങളെ ഫോളോ ചെയ്യുന്നവർ (Followers)",
+      followersHint: "നിങ്ങളുടെ followers ലിസ്റ്റ് ഇവിടെ പേസ്റ്റ് ചെയ്യുക",
+      followingLabel: "നിങ്ങൾ ഫോളോ ചെയ്യുന്നവർ (Following)",
+      followingHint: "നിങ്ങൾ ഫോളോ ചെയ്യുന്ന ലിസ്റ്റ് ഇവിടെ പേസ്റ്റ് ചെയ്യുക",
+      uploadBtn: "ഫോട്ടോ ചേർക്കുക",
+      addPersonBtn: "ആളെ ചേർക്കുക",
+      pasteListBtn: "ലിസ്റ്റ് പേസ്റ്റ് ചെയ്യുക",
+      pasteConfirmBtn: "ചേർക്കുക",
+      pasteCancelBtn: "വേണ്ട",
+      namePlaceholder: "യൂസർനെയിം",
+      totalLabel: "ആകെ:",
+      checkBtn: "പരിശോധിക്കുക",
+      statMutualLabel: "Mutual — രണ്ടുപേരും പരസ്പരം ഫോളോ ചെയ്യുന്നു",
+      statOweLabel: "നിങ്ങൾ അവരെ ഫോളോ ചെയ്യുന്നു, അവർ തിരിച്ച് ഫോളോ ചെയ്തിട്ടില്ല",
+      statFanLabel: "അവർ നിങ്ങളെ ഫോളോ ചെയ്യുന്നു, നിങ്ങൾ തിരിച്ച് ഫോളോ ചെയ്തിട്ടില്ല",
+      groupOweTitle: "തിരിച്ച് ഫോളോ ചെയ്യാത്തവർ",
+      groupFanTitle: "നിങ്ങൾ തിരിച്ച് ഫോളോ ചെയ്യാൻ ബാക്കിയുള്ളവർ",
+      groupMutualTitle: "Mutual followers",
+      emptyText: "ഇവിടെ ആരുമില്ല.",
+      noteText: "പേരുകൾ case-sensitive അല്ല — \"Anu_K\" ഉം \"anu_k\" ഉം ഒന്നായി കണക്കാക്കും. ഡ്യൂപ്ലിക്കേറ്റുകൾ സ്വയമേവ ഒഴിവാക്കും. ഫോട്ടോയിൽ നിന്ന് എടുത്ത യൂസർനെയിമുകളിൽ ചെറിയ തെറ്റുകൾ വരാം (OCR 100% കൃത്യമല്ല) — പരിശോധിക്കുന്നതിന് മുൻപ് ടെക്സ്റ്റ് ബോക്സ് ഒന്ന് നോക്കുക.",
+      ocrStatusReading: (i,n) => `ഫോട്ടോ ${i}/${n} വായിക്കുന്നു...`,
+      ocrStatusDone: (n) => `${n} യൂസർനെയിമുകൾ കിട്ടി — എന്തെങ്കിലും തെറ്റാണെങ്കിൽ നോക്കി ശരിയാക്കുക.`,
+      ocrStatusNone: "ഒന്നും വ്യക്തമായി കിട്ടിയില്ല, മാന്വൽ ആയി ടൈപ്പ് ചെയ്യുക.",
+      peopleTag: (n) => `${n} പേർ`
+    }
+  };
+
+  let currentLang = 'en';
+
+  function t(key){
+    return (I18N[currentLang] && I18N[currentLang][key] !== undefined)
+      ? I18N[currentLang][key]
+      : I18N.en[key];
+  }
+
+  function applyStaticTranslations(){
+    document.documentElement.lang = currentLang === 'ml_latin' ? 'en' : currentLang;
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      const val = t(key);
+      if(typeof val === 'string') el.textContent = val;
+    });
+    // Re-render dynamic tag / status text that depend on numbers already on screen
+    refreshDynamicText();
+    document.querySelectorAll('.name-input').forEach(inp => {
+      inp.placeholder = t('namePlaceholder');
+    });
+  }
+
+  function refreshDynamicText(){
+    const mutualN = parseInt(document.getElementById('statMutual').textContent) || 0;
+    const oweN = parseInt(document.getElementById('statOwe').textContent) || 0;
+    const fanN = parseInt(document.getElementById('statFan').textContent) || 0;
+    document.getElementById('mutualTag').textContent = t('peopleTag')(mutualN);
+    document.getElementById('oweTag').textContent = t('peopleTag')(oweN);
+    document.getElementById('fanTag').textContent = t('peopleTag')(fanN);
+  }
+
+  document.getElementById('langSelect').addEventListener('change', (e) => {
+    currentLang = e.target.value;
+    applyStaticTranslations();
+  });
+
+  // ---------- Theme ----------
+  document.querySelectorAll('.theme-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.theme-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.body.dataset.theme = btn.dataset.themeBtn;
+    });
+  });
+
+  // ---------- Placeholder avatar ----------
+  const PLACEHOLDER_SVG = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#8b9aa8" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-7 8-7s8 3 8 7"/></svg>`
+  );
+
+  // ---------- Row management ----------
+  function createRow(container, name, avatarSrc){
+    const row = document.createElement('div');
+    row.className = 'person-row';
+
+    const avatarLabel = document.createElement('label');
+    avatarLabel.className = 'avatar-upload';
+    const img = document.createElement('img');
+    img.src = avatarSrc || PLACEHOLDER_SVG;
+    img.dataset.hasAvatar = avatarSrc ? '1' : '0';
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files && fileInput.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        img.src = e.target.result;
+        img.dataset.hasAvatar = '1';
+      };
+      reader.readAsDataURL(file);
+    });
+    avatarLabel.appendChild(img);
+    avatarLabel.appendChild(fileInput);
+
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.className = 'name-input';
+    nameInput.value = name || '';
+    nameInput.placeholder = t('namePlaceholder');
+    nameInput.addEventListener('input', () => onFieldChanged(container));
+
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'row-remove';
+    removeBtn.textContent = '\u00d7';
+    removeBtn.addEventListener('click', () => {
+      row.remove();
+      onFieldChanged(container);
+    });
+
+    row.appendChild(avatarLabel);
+    row.appendChild(nameInput);
+    row.appendChild(removeBtn);
+    container.appendChild(row);
+    return row;
+  }
+
+  function onFieldChanged(container){
+    if(container.id === 'followersRows') updateCounts();
+    if(container.id === 'followingRows') updateCounts();
+  }
+
+  function getFieldEntries(container){
+    const entries = [];
+    container.querySelectorAll('.person-row').forEach(row => {
+      const name = row.querySelector('.name-input').value.trim();
+      if(!name) return;
+      const img = row.querySelector('img');
+      const avatar = img.dataset.hasAvatar === '1' ? img.src : null;
+      entries.push({ name, avatar });
+    });
+    return entries;
+  }
+
+  function uniqueEntries(entries){
+    const map = new Map();
+    entries.forEach(({name, avatar}) => {
+      const key = name.toLowerCase();
+      if(!map.has(key)) map.set(key, {name, avatar});
+      else if(avatar && !map.get(key).avatar) map.get(key).avatar = avatar;
+    });
+    return map;
+  }
+
+  const followersRows = document.getElementById('followersRows');
+  const followingRows = document.getElementById('followingRows');
+  const fCount = document.getElementById('fCount');
+  const gCount = document.getElementById('gCount');
+
+  function updateCounts(){
+    fCount.textContent = uniqueEntries(getFieldEntries(followersRows)).size;
+    gCount.textContent = uniqueEntries(getFieldEntries(followingRows)).size;
+  }
+
+  document.querySelectorAll('[data-add-person]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const container = btn.dataset.addPerson === 'followers' ? followersRows : followingRows;
+      const row = createRow(container, '', null);
+      row.querySelector('.name-input').focus();
+      updateCounts();
+    });
+  });
+
+  // ---------- Paste list toggle ----------
+  document.querySelectorAll('[data-toggle-paste]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const box = document.getElementById(btn.dataset.togglePaste + 'PasteBox');
+      box.classList.toggle('open');
+      if(box.classList.contains('open')) box.querySelector('textarea').focus();
+    });
+  });
+  document.querySelectorAll('[data-paste-cancel]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.pasteCancel;
+      document.getElementById(key + 'PasteBox').classList.remove('open');
+      document.getElementById(key + 'PasteArea').value = '';
+    });
+  });
+  document.querySelectorAll('[data-paste-confirm]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.pasteConfirm;
+      const container = key === 'followers' ? followersRows : followingRows;
+      const area = document.getElementById(key + 'PasteArea');
+      const names = area.value.split(/[\n,]+/).map(s => s.trim().replace(/^@/, '')).filter(Boolean);
+      names.forEach(n => createRow(container, n, null));
+      area.value = '';
+      document.getElementById(key + 'PasteBox').classList.remove('open');
+      updateCounts();
+    });
+  });
+
+  // ---------- OCR ----------
+  function extractUsernames(ocrText){
+    const lines = ocrText.split(/\n+/);
+    const found = [];
+    const usernamePattern = /^[a-zA-Z0-9](?:[a-zA-Z0-9._]{0,28})[a-zA-Z0-9]$|^[a-zA-Z0-9]{1,2}$/;
+
+    lines.forEach(line => {
+      const tokens = line.trim().split(/\s+/);
+      tokens.forEach(tok => {
+        let cleaned = tok.replace(/^@/, '').replace(/[^a-zA-Z0-9._]/g, '');
+        if(cleaned.length < 2 || cleaned.length > 30) return;
+        if(/^\d+$/.test(cleaned)) return;
+        if(usernamePattern.test(cleaned)){
+          found.push(cleaned);
+        }
+      });
+    });
+    return found;
+  }
+
+  function setupPhotoUpload(inputId, statusId, container){
+    const input = document.getElementById(inputId);
+    const status = document.getElementById(statusId);
+
+    input.addEventListener('change', async () => {
+      const files = Array.from(input.files || []);
+      if(files.length === 0) return;
+
+      let allFound = [];
+      for(let i = 0; i < files.length; i++){
+        status.className = 'ocr-status working';
+        status.textContent = t('ocrStatusReading')(i+1, files.length);
+        try{
+          const result = await Tesseract.recognize(files[i], 'eng');
+          const names = extractUsernames(result.data.text);
+          allFound = allFound.concat(names);
+        }catch(err){
+          console.error('OCR failed for a file', err);
+        }
+      }
+
+      const uniq = Array.from(new Set(allFound));
+      uniq.forEach(n => createRow(container, n, null));
+
+      status.className = 'ocr-status done';
+      status.textContent = uniq.length > 0 ? t('ocrStatusDone')(uniq.length) : t('ocrStatusNone');
+
+      updateCounts();
+      input.value = '';
+    });
+  }
+
+  setupPhotoUpload('followersPhoto', 'followersStatus', followersRows);
+  setupPhotoUpload('followingPhoto', 'followingStatus', followingRows);
+
+  function renderChips(container, people){
+    container.innerHTML = '';
+    if(people.length === 0){
+      const p = document.createElement('div');
+      p.className = 'empty';
+      p.textContent = t('emptyText');
+      container.appendChild(p);
+      return;
+    }
+    people.forEach(({name, avatar}) => {
+      const chip = document.createElement('span');
+      chip.className = 'chip';
+      if(avatar){
+        const img = document.createElement('img');
+        img.src = avatar;
+        chip.appendChild(img);
+      }else{
+        const fallback = document.createElement('span');
+        fallback.className = 'chip-fallback';
+        fallback.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-7 8-7s8 3 8 7"/></svg>';
+        chip.appendChild(fallback);
+      }
+      const label = document.createElement('span');
+      label.textContent = name;
+      chip.appendChild(label);
+      container.appendChild(chip);
+    });
+  }
+
+  document.getElementById('runBtn').addEventListener('click', () => {
+    const followers = uniqueEntries(getFieldEntries(followersRows));
+    const following = uniqueEntries(getFieldEntries(followingRows));
+
+    const mutual = [];
+    const owe = [];
+    const fan = [];
+
+    following.forEach((person, key) => {
+      if(followers.has(key)) mutual.push(person);
+      else owe.push(person);
+    });
+    followers.forEach((person, key) => {
+      if(!following.has(key)) fan.push(person);
+    });
+
+    mutual.sort((a,b)=>a.name.localeCompare(b.name));
+    owe.sort((a,b)=>a.name.localeCompare(b.name));
+    fan.sort((a,b)=>a.name.localeCompare(b.name));
+
+    document.getElementById('statMutual').textContent = mutual.length;
+    document.getElementById('statOwe').textContent = owe.length;
+    document.getElementById('statFan').textContent = fan.length;
+
+    refreshDynamicText();
+
+    renderChips(document.getElementById('mutualList'), mutual);
+    renderChips(document.getElementById('oweList'), owe);
+    renderChips(document.getElementById('fanList'), fan);
+
+    document.getElementById('results').classList.remove('hidden');
+    document.getElementById('results').scrollIntoView({behavior:'smooth', block:'start'});
+  });
+
+  // ---------- Init ----------
+  createRow(followersRows, '', null);
+  createRow(followingRows, '', null);
+  updateCounts();
+  applyStaticTranslations();
+</script>
+</body>
+</html>
